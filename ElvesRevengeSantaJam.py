@@ -7,14 +7,14 @@ from AStar import a_star
 from Shapes import center_rectangle, corner_rectangle
 from World import World, Vector
 from Camera import Camera
-from Entities import Character, Entity, EntityState, SnowBall, SnowMan, Elf, Building, Item
+from Entities import Character, EntityState, SnowBall, SnowMan, Elf, Building, Item
 from Test_World import make_world, building_map
 
 
-def cap(x, max):
-    if x < max:
+def cap(x, m):
+    if x < m:
         return x
-    return max
+    return m
 
 
 class GameState(Enum):
@@ -34,34 +34,33 @@ class ElvesRevengeSantaJam:
         self.window = pygame.display.set_mode(self.resolution)
 
         pygame.display.set_caption("ElvesRevengeSantaJam")
+        self.font = pygame.font.SysFont("courier", 18, True)
 
         self.left = self.right = self.up = self.down = self.snow = self.shovel = self.build = False
         self.mouse = Vector(0, 0)
 
         self.player = Character(shape=center_rectangle(10, 10), color=(255, 0, 0))  # todo - pass texture
-        self.test_elf = Elf(shape=center_rectangle(10, 10), color=(0, 255, 0), loc=Vector(-500, -500), item=Item.TORCH, star=self.a_star)
         self.player.item = Item.TORCH
         self.tile_size = 50
         self.map_size = 18
         self.snow_map = make_world(self.map_size, self.map_size)
         self.width = len(self.snow_map) * self.tile_size // 2
         self.height = len(self.snow_map[0]) * self.tile_size // 2
-        self.world = World((-self.width, -self.height, self.width * 2, self.height * 2), (0, 0, 0), [self.player, self.test_elf])
+        self.world = World((-self.width, -self.height, self.width * 2, self.height * 2), (0, 0, 0), [self.player])
         self.world.gravity = Vector(0, 0)
-        self.camera = Camera(True)
+        self.camera = Camera(self.font, True)
         self.camera.target = self.player
-        self.camera.zoom = 2
+        self.camera.zoom = 1.25
         self.running = True
-        self.snowman_op_level = 1
+        self.snowman_op_level = 2
         self.snowfall_remaining = 0
         self.elves_remaining = 0
         self.wave = 0
-        self.fortify_period = 1.0
-        self.attack_period = 10.0
+        self.fortify_period = 60.0
+        self.attack_period = 60.0
         self.timer = 0.0
         self.state = GameState.WAVE_START
         self.occupied_tiles = []
-        self.test_path = []
 
     def load_map(self, buildings):
         for building in buildings:
@@ -88,18 +87,16 @@ class ElvesRevengeSantaJam:
                     tile = Vector(building[1], building[2]) + Vector(x, y)
                     self.occupied_tiles.append(tile)
 
-            building = Building(shape=shape, texture=texture, color=(165, 42, 42), loc=Vector(*cords), density=0)
+            building = Building(shape=shape, texture=texture, color=(145, 42, 42), loc=Vector(*cords), density=0)
             self.world.entities.append(building)
 
     def a_star(self, start, finish):
         start_cords = Vector(*self.current_cords_v(start))
         target_cords = Vector(*self.current_cords_v(finish))
-        print(start, start_cords, finish, target_cords)
-        result = a_star(start_cords, target_cords, self.occupied_tiles)
-        return [self.tile_center(*z) for z in result]
+        return [self.tile_center(*z) for z in a_star(start_cords, target_cords, self.occupied_tiles)]
 
     def make_wave(self):
-        self.snowfall_remaining = self.map_size * self.map_size * 2 - self.wave
+        self.snowfall_remaining = self.map_size ** 2 - (cap(self.wave * self.wave, self.map_size ** 2) - 1)
         self.elves_remaining = 5 + self.wave
         self.wave += 1
 
@@ -118,7 +115,7 @@ class ElvesRevengeSantaJam:
             y = 0 if randint(0, 1) else self.map_size - 1
 
         loc = Vector(*self.tile_center(x, y))
-        item = Item.TORCH # Item.NONE if randint(0, 1) else Item.TORCH
+        item = Item.TORCH  # Item.NONE if randint(0, 1) else Item.TORCH
         elf = Elf(shape=center_rectangle(10, 10), color=(0, 255, 0), loc=loc, item=item, star=self.a_star)
         self.world.entities.append(elf)
         self.elves_remaining -= 1
@@ -182,16 +179,25 @@ class ElvesRevengeSantaJam:
 
     def render(self):
         self.window.fill((0, 0, 0))
-        ts = self.tile_size
-        w = self.width
-        h = self.height
         for x in range(len(self.snow_map)):
             for y in range(len(self.snow_map[0])):
-                if self.snow_map[x][y] is not Entity:
-                    self.camera.render_aabb(self.window, (x * ts - w, x * ts + ts - w, y * ts - h, y * ts + ts - h))
+                size = self.snow_map[x][y]
+                color = (100, 100, 200)
+                if size > 0:
+                    self.camera.render_center_rect(self.window, self.tile_center(x, y), size, color)
         for entity in self.world.entities:
             self.camera.render(self.window, entity)
-        self.camera.render_quadtree(self.window, self.world.tree, (0, 100, 255))
+        # self.camera.render_quadtree(self.window, self.world.tree, (0, 100, 255))
+        if self.state == GameState.FORTIFICATION:
+            top_text = self.font.render("Fortification Period  %s" % (round(self.timer, 1)), True, (255, 255, 255))
+        elif self.state == GameState.ATTACK:
+            top_text = self.font.render("ATTACK!  %s" % (round(self.timer, 1)), True, (255, 255, 255))
+        else:
+            top_text = self.font.render("GAME OVER", True, (255, 255, 255))
+        bottom_text = self.font.render("Wave %s" % self.wave, True, (255, 255, 255))
+
+        self.window.blit(top_text, (10, 10, *top_text.get_size()))
+        self.window.blit(bottom_text, (10, 25, *bottom_text.get_size()))
         pygame.display.update()
 
     def get_inputs(self):
@@ -244,6 +250,9 @@ class ElvesRevengeSantaJam:
         elif self.build:
             self.build_snowman(self.player)
 
+        if len([x for x in self.world.entities if type(x) == Building and not x.dead]) <= 0:
+            self.state = GameState.LOSE
+
         if self.state == GameState.WAVE_START:
             self.make_wave()
             self.timer = self.fortify_period
@@ -259,24 +268,23 @@ class ElvesRevengeSantaJam:
                 for i in range(int(snow_per_second)):
                     self.place_snow()
         elif self.state == GameState.ATTACK:
-            if self.timer <= 0.0:
+            elves_alive = self.elves_remaining + len([x for x in self.world.entities if type(x) == Elf])
+            if self.timer <= 0.0 or elves_alive <= 0:
                 self.state = GameState.WAVE_START
             else:
                 elves_per_second = self.elves_remaining / self.timer
-                elves_per_second = 0
-                if self.world.tick_time % 60 == 0 and 1.0 > elves_per_second > 0.0:
+                if self.world.tick_number % 60 == 0 and 1.0 > elves_per_second > 0.0:
                     elves_per_second = 1
                 if len(self.world.entities) < 100:
                     for i in range(int(elves_per_second)):
                         self.place_elf()
+        else:
+            pass  # GAME OVER...
 
     def run(self):
         self.load_map(building_map())
         clock = pygame.time.Clock()
         while self.running:
-            if self.test_elf.target_building is not None:
-                pass
-                # print(self.current_cords(self.test_elf.target_building), self.test_elf.path)
             clock.tick(60)
             self.get_inputs()
             self.player_movement()

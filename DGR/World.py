@@ -78,7 +78,7 @@ class World:
         for node in self.tree.get_child_nodes():
             for a in node:
                 for b in node:
-                    if a != b and a.layer & b.layer and b not in cull_tracker[a]:
+                    if a != b and a.layer & b.layer and b not in cull_tracker[a] and not (type(a) == type(b) == Elf):
                         if aabb_collision(a.aabb, b.aabb):
                             potential_collisions.append(Collision(a, b, None, None))
                             cull_tracker[a].append(b)

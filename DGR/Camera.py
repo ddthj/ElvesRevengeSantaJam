@@ -1,3 +1,4 @@
+from Entities import Building
 from LinAlg import Vector
 from Entity import Entity
 from pygame import transform, draw
@@ -16,11 +17,12 @@ def cap(x, low, high):
 
 
 class Camera:
-    def __init__(self, debug=False):
+    def __init__(self, font, debug=False):
         self.location = Vector(0, 0, 0)
         self.target = None
         self.zoom = 1
         self.debug = debug
+        self.font = font
 
     def tick(self):
         if self.target is not None:
@@ -43,12 +45,10 @@ class Camera:
                 for p in entity.fire_particles:
                     loc = (p - self.location) * self.zoom + offset
                     draw.circle(window, (255, 0, 0), loc.render(), 3)
-            if entity.mass > 0:
-                for c in entity.collisions:
-                    if c.contact_point is not None:
-                        start = (c.contact_point - self.location) * self.zoom + offset
-                        end = (c.contact_point + (c.total_impulse.normalize() * 100) - self.location) * self.zoom + offset
-                        draw.line(window, entity.color, start.render(), end.render(), 2)
+        if type(entity) == Building and not entity.dead:
+            surface = self.font.render(str(int(entity.health)), True, (255, 255, 255))
+            loc = (entity.loc - self.location) * self.zoom + offset
+            window.blit(surface, loc.render())
 
     def render_aabb(self, window, a, color=None):
         offset = Vector(*window.get_size(), 0) * Vector(0.5, -0.5, 0)
@@ -59,7 +59,13 @@ class Camera:
         for i in range(4):
             start = (vertices[i - 1] - self.location) * self.zoom + offset
             end = (vertices[i] - self.location) * self.zoom + offset
-            draw.line(window, [55, 0, 55] if color is None else color, start.render(), end.render(), 2)
+            draw.line(window, [0, 55, 100] if color is None else color, start.render(), end.render(), 2)
+
+    def render_center_rect(self, window, loc, size, color=None):
+        half_size = Vector(size / 2, -size / 2)
+        offset = Vector(*window.get_size(), 0) * Vector(0.5, -0.5, 0)
+        corner = ((loc - self.location - half_size) * self.zoom + offset).render()
+        draw.rect(window, [0, 55, 100] if color is None else color, (corner[0], corner[1], size * self.zoom, size * self.zoom), 2)
 
     def render_quadtree(self, window, tree, color):
         self.render_aabb(window, tree.aabb, color)
@@ -71,7 +77,7 @@ class Camera:
         loc = loc * self.zoom + offset
         draw.circle(window, (255, 255, 255), loc.render(), radius)
 
-    def render_line(self, window, start, end, color = None):
+    def render_line(self, window, start, end, color=None):
         offset = Vector(*window.get_size(), 0) * Vector(0.5, -0.5, 0)
         start = start * self.zoom + offset
         end = end * self.zoom + offset
