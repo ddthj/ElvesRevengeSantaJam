@@ -1,4 +1,4 @@
-from LinAlg import Vector
+from DGR.LinAlg import Vector
 
 
 def find_h(x, finish):

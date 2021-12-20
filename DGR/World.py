@@ -1,8 +1,8 @@
 from typing import List
 
-from Entities import Elf
-from Physics import *
-from LinAlg import Vector
+from DGR.Entity import Entity
+from DGR.LinAlg import Vector
+from DGR.Physics import aabb_collision, sat, Collision
 
 
 class QuadTree:
@@ -78,7 +78,7 @@ class World:
         for node in self.tree.get_child_nodes():
             for a in node:
                 for b in node:
-                    if a != b and a.layer & b.layer and b not in cull_tracker[a] and not (type(a) == type(b) == Elf):
+                    if type(a) != type(b) and a.layer & b.layer and b not in cull_tracker[a]:
                         if aabb_collision(a.aabb, b.aabb):
                             potential_collisions.append(Collision(a, b, None, None))
                             cull_tracker[a].append(b)

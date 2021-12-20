@@ -1,6 +1,6 @@
-from Entity import Entity
-from LinAlg import Vector
-from Suntherland import suntherland
+from DGR.Entity import Entity
+from DGR.LinAlg import Vector
+from DGR.Suntherland import suntherland
 
 
 class Collision:

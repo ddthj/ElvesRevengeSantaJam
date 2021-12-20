@@ -1,5 +1,5 @@
-from LinAlg import Vector, Matrix3, det
-from Shapes import circle
+from DGR.LinAlg import Vector, Matrix3, det
+from DGR.Shapes import circle
 
 
 def find_mass_inertia(entity):

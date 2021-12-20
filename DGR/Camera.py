@@ -1,8 +1,8 @@
-from Entities import Building
-from LinAlg import Vector
-from Entity import Entity
 from pygame import transform, draw
 from math import pi
+from Entities import Building
+from DGR.LinAlg import Vector
+from DGR.Entity import Entity
 
 
 DEGREES = 180 / pi

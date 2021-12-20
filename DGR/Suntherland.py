@@ -1,5 +1,4 @@
-from LinAlg import Vector
-import pygame
+from DGR.LinAlg import Vector
 
 
 def render_polygon(poly, color, window, loop=True):
@@ -12,7 +11,7 @@ def render_polygon(poly, color, window, loop=True):
             b = poly[0].copy().render()
         else:
             break
-        pygame.draw.line(window, color, a, b)
+        # pygame.draw.line(window, color, a, b)
 
 
 # confirms that a polygon is both clockwise-defined and convex

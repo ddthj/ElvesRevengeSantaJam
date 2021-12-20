@@ -2,11 +2,10 @@ from enum import Enum
 from random import randint
 
 import pygame
-
 from AStar import a_star
-from Shapes import center_rectangle, corner_rectangle
-from World import World, Vector
-from Camera import Camera
+from DGR.Shapes import center_rectangle, corner_rectangle
+from DGR.World import World, Vector
+from DGR.Camera import Camera
 from Entities import Character, EntityState, SnowBall, SnowMan, Elf, Building, Item
 from Test_World import make_world, building_map
 

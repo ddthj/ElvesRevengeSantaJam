@@ -1,9 +1,8 @@
 from enum import Enum
+from random import randint
 from DGR.Entity import Entity
 from DGR.Shapes import center_rectangle
-from random import randint
-
-from LinAlg import Vector
+from DGR.LinAlg import Vector
 
 
 def cap(x, m):
@@ -37,7 +36,7 @@ class Character(Entity):
         self.op_level = 2
         self.health = kwargs.get("health", 5.0)
         self.walk_speed = kwargs.get("speed", 50.0)
-        self.throw_speed = kwargs.get("throw_speed", 1.5)
+        self.throw_speed = kwargs.get("throw_speed", 0.5)
         self.throw_cooldown = 0.0
         self.affected_by_torque = False
         self.throw_snow = kwargs.get("throw", None)
@@ -57,7 +56,7 @@ class Character(Entity):
 class SnowMan(Character):
     def tick(self, world):
         size = 10 + cap(self.snow_carried, 46)
-        self.throw_speed = 1.5 - 0.03 * cap(self.snow_carried, 46)
+        self.throw_speed = 1.5 - 0.03 * cap(self.snow_carried, 40)
         self.shape = center_rectangle(size / self.op_level, size / self.op_level)
 
         if self.snow_carried == 0:
