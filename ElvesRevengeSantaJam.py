@@ -274,9 +274,8 @@ class ElvesRevengeSantaJam:
                 elves_per_second = self.elves_remaining / self.timer
                 if self.world.tick_number % 60 == 0 and 1.0 > elves_per_second > 0.0:
                     elves_per_second = 1
-                if len(self.world.entities) < 100:
-                    for i in range(int(elves_per_second)):
-                        self.place_elf()
+                for i in range(int(elves_per_second)):
+                    self.place_elf()
         else:
             pass  # GAME OVER...
 
